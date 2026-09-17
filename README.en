@@ -3,7 +3,7 @@
 [简体中文](README.md) · [English](README.en)
 
 <br/>
-<img src="web/public/favicon.svg" width="96" height="96" alt="Footprint Logo"/>
+<img src="docs/screenshots/logo.png" width="96" height="96" alt="Footprint Logo"/>
 
 </div>
 
@@ -18,7 +18,20 @@ Tell the AI assistant "Plan 4 days in Hangzhou from Shanghai with a budget of ¥
 and it generates an **executable** timeline itinerary — which train to take and when,
 where to eat, where to stay, itemized costs, and over-budget warnings.
 
+<div align="center">
+  <img src="docs/screenshots/02_map.png" alt="Footprint map: lit cities rendered as highlighted polygons; Esri world basemap for global view, auto-switching to AMap Chinese tiles when zooming into China" width="100%"/>
+  <p><sub>Footprint map — lit cities highlighted; AI-generated itineraries land on the matching city</sub></p>
 </div>
+
+## Interface Preview
+
+| AI Assistant · Timeline Itinerary | Trip Plans · Multiple Schemes |
+|---|---|
+| <img src="docs/screenshots/03_chat.png" alt="AI assistant: one sentence generates a 3-day Sanya itinerary"/> One sentence → a full itinerary: when to depart, where to eat, where to stay, itemized costs — spicy restaurants filtered out by the remembered "no spicy food" preference | <img src="docs/screenshots/04_plans.png" alt="Trip plans: multiple saved schemes per city"/> Save multiple plans per city; switch horizontally, save as new scheme |
+| **Trip Records · Bill Details** | **AI Memory · Confirm-before-use** |
+| <img src="docs/screenshots/05_records.png" alt="Trip records: bills filed per trip"/> Bills filed per trip — expand to see every item | <img src="docs/screenshots/06_profile.png" alt="Profile: AI memory list"/> The AI remembers your preferences ("no spicy food", "hate queuing"); **pending memories do not take effect** until confirmed |
+
+> Login page and more under [`docs/screenshots/`](docs/screenshots/) (see [login](docs/screenshots/01_login.png)).
 
 ## Author
 
@@ -62,11 +75,14 @@ See [LICENSE](LICENSE) and [NOTICE](NOTICE).
 - Nationwide city-boundary GeoJSON (parsed in an isolate) with ray-casting hit tests.
 - Long-press a city to light it up / un-light it, plan a trip, or open trip records; lit cities render as highlighted polygons.
 - Lighting up auto-creates a travel archive; bills, notes and itineraries are filed by city.
+- Basemap auto-switches with the viewport: Esri world tiles for global view (complete foreign labels), AMap Chinese tiles when zooming into China (street-level detail), plus Esri satellite.
 
 ### 🧭 AI Trip Planning
-- Slot filling with the small LLM + RAG few-shot examples: extracts departure city, destination, days and budget from one sentence.
-- A deterministic DFS planning engine (time-driven state machine + backtracking pruning + dynamic budget splitting) plans against real attraction / train / flight data — no more hallucinated train numbers or wrong totals.
+- Slot filling with the small LLM + RAG few-shot examples: extracts departure city, destination, days and budget from one sentence; regex fallback for "from A to B" patterns; provinces auto-resolve to cities ("5 days in Yunnan" → Kunming).
+- A deterministic DFS planning engine (time-driven state machine + backtracking pruning + dynamic budget splitting) plans against real attraction / train data — no more hallucinated train numbers or wrong totals.
 - Outputs day-grouped timeline itinerary cards: transport / meals / hotels / attractions + itemized cost + over-budget alert.
+- **Confirmed preferences shape the plan**: "no spicy food" filters spicy restaurants, allergies are hard-filtered, queue-averse users get quieter attractions first — the card states which preferences applied.
+- Scenic-area aliases: "Shangri-La / Jiuzhaigou / Wuyuan" map to their governing cities, with an explanation on the card.
 
 ### 💬 Smart Expense Logging
 - Natural-language logging: say "Nanning accommodation 200" and it is categorized automatically.
@@ -74,9 +90,11 @@ See [LICENSE](LICENSE) and [NOTICE](NOTICE).
 
 ### 📚 Travel Guide Q&A
 - Vector-search over a local travel-guide knowledge base; supports `.txt` / `.pdf` / `.csv` ingestion with incremental updates.
+- Says so honestly when out of scope; for cross-border routes it lists raw web-search results (marked as unverified) instead of inventing a plausible answer.
 
 ### 🛡️ Stable Dialogue (Harness Architecture)
 - Deterministic Python code validates model outputs: passes valid answers straight through, removes failed sub-agents and re-routes.
+- Three-layer write constraints: intent authorized against the user's own words → writes recorded to an evidence ledger → reply claims verified against it (a hallucinated "already lit" is replaced with an honest answer).
 - A stable conversational experience even on a 0.8B parameter model.
 
 ## Architecture
