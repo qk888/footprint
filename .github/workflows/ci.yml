@@ -1,0 +1,40 @@
+name: logic-tests
+
+# 只跑"不依赖模型、数据库、向量库"的纯逻辑测试 —— 这些在 GitHub 免费 runner 上秒级可跑。
+# 需要 GPU / MySQL / Redis / Chroma / 模型的完整回归（eval_intent、eval_rag、test_travel、e2e_ui）
+# 跑不了，本地全栈起来后按 README 的说明跑。
+
+on:
+  push:
+    branches: [master, main]
+  pull_request:
+
+jobs:
+  logic:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.13"
+
+      - name: Install minimal deps
+        run: pip install pandas
+
+      - name: 城市名 / 景区别名 / 路线解析匹配（48 项）
+        working-directory: backend
+        run: python scripts/test_city_match.py
+
+      - name: 偏好 → 规划筛选（12 项）
+        working-directory: backend
+        run: python scripts/test_preferences.py
+
+      - name: harness 约束层：写操作授权 / 取证 / 声称校验 / 输出约束（62 项，零第三方依赖）
+        working-directory: backend
+        run: python scripts/test_harness_guard.py
+
+      - name: 语法自检（全部改动文件可解析）
+        working-directory: backend
+        run: |
+          python -m compileall -q app
