@@ -1,0 +1,13 @@
+# 不把本地产物/密钥打进镜像
+.env
+.venv/
+__pycache__/
+*.pyc
+*.log
+logs/
+chroma_db/
+app/data/
+app/agent/chroma_db/
+app/agent/logs/
+.git/
+.vscode/

@@ -1,0 +1,6 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" width="64" height="64">
+  <title>足迹 Footprint</title>
+  <rect width="64" height="64" rx="15" fill="#143c34" />
+  <ellipse cx="23" cy="22" rx="8.4" ry="12.4" fill="#ffffff" transform="rotate(-16 23 22)" />
+  <ellipse cx="41" cy="42" rx="8.4" ry="12.4" fill="#d9663d" transform="rotate(-16 41 42)" />
+</svg>

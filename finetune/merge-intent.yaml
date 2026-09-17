@@ -1,0 +1,17 @@
+# ============================================================
+# 足迹 Footprint —— 合并 LoRA 回基座（训练完之后跑）
+#
+# 运行：llamafactory-cli export merge-intent.yaml
+# 注意：路径必须用绝对路径 —— YAML 里的 ~ 不会被展开，会报找不到目录
+# ============================================================
+
+# 基座：直接用本机已下载的 HF 原始权重（WSL 里通过 /mnt/c 读，不用再下一遍）
+model_name_or_path: /mnt/c/Users/Administrator/Documents/Qoder/2026-09-11/75a45244/footprint/models/Qwen2.5-1.5B-Instruct
+# 训练产出的 adapter（= 训练 yaml 里的 output_dir）
+adapter_name_or_path: /home/administrator/footprint-finetune/output/qwen2.5-1.5b-footprint-intent
+template: qwen
+finetuning_type: lora
+# 合并后的 fp16 权重落在这里
+export_dir: /home/administrator/footprint-finetune/merged
+export_size: 2
+export_legacy_format: false

@@ -1,0 +1,30 @@
+collection_name: travel_guide
+slot_collection_name: slot_examples
+persist_directory: chroma_db
+#长期记忆的语义检索(和知识库共用 chroma_db 卷, 单独一个 collection)
+memory_collection_name: user_memories
+memory_vector_min_count: 200   # 生效中的记忆超过这个条数才启用语义召回(条数少时规则通道就够)
+memory_vector_k: 10            # 每次语义召回的条数(注入前还会被条数/字数预算二次裁剪)
+memory_sync_interval: 60       # 索引对账节流(秒), 避免每轮聊天都扫向量库
+memory_sync_batch: 100          # 一轮后台补建最多灌多少条, 防止首灌把 embed 服务打满
+k: 6              # RAG 默认取几条。知识库换成 280 字细块后取 1 条信息量不够
+#知识库分层检索(services/kb_retriever.py): 认得出地名就把范围限定在该城市, 认不出才走全库纯向量
+kb_k: 6                 # 最终拼进提示词的参考资料条数
+kb_candidate_mult: 4    # 先取 kb_k 的几倍做重排, 再截断
+kb_literal_weight: 0.35 # 字面重合度在排序里的权重(从 distance 里减), 补向量对专名不敏感的短板
+kb_geo_max_len: 8       # 地名字典最长匹配长度, 如"甘南藏族自治州"
+# 地名字典只收"带城市前缀的块头"(重庆 · 景点)和城市表; 不带前缀的章节块头(住宿：...)
+# 整块剔除 —— 否则 "货币贬值""网上购物" 会被识别成"地名"而导致误判命中
+# 判"命中"的两道闸(见 kb_retriever.is_relevant)。为什么不能只看距离:
+# 实测无关 query 的 top1 距离能低到 0.425("火星上的酒店多少钱一晚"命中"香港·住宿"),
+# 比真命中的"洪崖洞门票多少"(0.443)还小 —— 向量检索永远返回"最像的", 距离只反映相对排序
+kb_miss_threshold: 0.55  # 距离超过它直接判 miss
+kb_literal_min: 0.15     # 认不出地名时, 还要求 query 与命中块有这么多字面交集, 避免被硬凑
+slot_k: 3         # 槽位示例取 3 条: 只给 1 条时模型学不到"只说一个城市→它是目的地"
+data_path: data
+md5_hex_store: chroma_db/md5.text   # 和向量库同生共死(容器里 chroma_db 是持久卷, 镜像层重建会丢记录)
+allow_knowledge_file_type: ["txt", "pdf", "csv"]
+
+chunk_size: 200
+chunk_overlap: 20
+separators: ["\n\n", "\n", ".", "?", "!", ";", ":", ",", "。", " "]

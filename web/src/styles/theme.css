@@ -1,0 +1,223 @@
+/* ============================================================
+   足迹 Footprint —— 设计系统（旅行手帐）
+   墨绿主色 + 陶土橙点缀 + 纸感沙底；细描边、软阴影、胶囊按钮
+   ============================================================ */
+:root {
+  /* ---- 主色与点缀 ---- */
+  --ft-ink: #143c34;          /* 墨绿：文字、主按钮、点亮城市 */
+  --ft-ink-2: #1f5a4e;        /* 墨绿浅一档：hover */
+  --ft-accent: #d9663d;       /* 陶土橙：强调、当前项 */
+  --ft-accent-soft: #f7e2d7;
+  --ft-ok: #2f7d63;
+  --ft-warn: #b4741c;
+  --ft-danger: #c0472f;
+
+  /* ---- 表面与描边 ---- */
+  --ft-paper: #ffffff;
+  --ft-sand: #f6f1e7;         /* 页面底：纸感沙 */
+  --ft-sand-2: #f1eadc;
+  --ft-line: #e4dccd;
+  --ft-line-strong: #cfc5b2;
+
+  /* ---- 文字层级 ---- */
+  --ft-text: #1b2421;
+  --ft-text-2: #5f6d67;
+  --ft-text-3: #8c9791;
+
+  /* ---- 形状与阴影 ---- */
+  --ft-radius: 16px;
+  --ft-radius-sm: 10px;
+  --ft-radius-pill: 999px;
+  --ft-shadow-1: 0 1px 2px rgba(20, 60, 52, 0.06), 0 4px 12px rgba(20, 60, 52, 0.05);
+  --ft-shadow-2: 0 2px 6px rgba(20, 60, 52, 0.08), 0 12px 28px rgba(20, 60, 52, 0.08);
+
+  /* ---- 字体：标题用衬线（手帐味），正文无衬线 ---- */
+  --font: -apple-system, BlinkMacSystemFont, "Segoe UI", "PingFang SC",
+    "Microsoft YaHei", Roboto, Helvetica, Arial, sans-serif;
+  --font-display: "Songti SC", "STSong", "Noto Serif SC", "Source Han Serif SC",
+    Georgia, "Times New Roman", serif;
+
+  /* ============================================================
+     兼容层：视图里大量用到旧的变量名，这里重新指向新配色，
+     3000 行视图样式无需逐个改也能整体换肤。
+     ============================================================ */
+  --c-black: var(--ft-ink);
+  --c-white: var(--ft-paper);
+  --c-grey-light: var(--ft-sand-2);
+  --c-grey-medium: var(--ft-line-strong);
+  --c-grey-text: var(--ft-text-2);
+  --c-surface: var(--ft-sand);
+  --c-surface-variant: #efe7d8;
+  --border-w: 1px;
+  --radius: var(--ft-radius);
+  --radius-sm: var(--ft-radius-sm);
+  --shadow-hard: var(--ft-shadow-2);
+  --shadow-hard-sm: var(--ft-shadow-1);
+}
+
+* {
+  box-sizing: border-box;
+}
+
+html,
+body,
+#app {
+  height: 100%;
+  margin: 0;
+}
+
+body {
+  font-family: var(--font);
+  color: var(--ft-text);
+  background: var(--ft-sand);
+  -webkit-font-smoothing: antialiased;
+}
+
+h1, h2, h3 {
+  font-family: var(--font-display);
+  font-weight: 500;
+}
+
+button {
+  font-family: inherit;
+  cursor: pointer;
+}
+
+input,
+textarea {
+  font-family: inherit;
+}
+
+/* ============================================================
+   组件
+   ============================================================ */
+.ft-card {
+  background: var(--ft-paper);
+  border: 1px solid var(--ft-line);
+  border-radius: var(--ft-radius);
+  box-shadow: var(--ft-shadow-1);
+}
+
+.ft-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  padding: 11px 22px;
+  font-size: 14px;
+  font-weight: 500;
+  color: #fff;
+  background: var(--ft-ink);
+  border: 1px solid var(--ft-ink);
+  border-radius: var(--ft-radius-pill);
+  transition: background 0.15s ease, box-shadow 0.15s ease, transform 0.08s ease;
+}
+.ft-btn:hover {
+  background: var(--ft-ink-2);
+  border-color: var(--ft-ink-2);
+  box-shadow: var(--ft-shadow-1);
+}
+.ft-btn:active {
+  transform: translateY(1px);
+}
+.ft-btn:disabled {
+  opacity: 0.45;
+  cursor: not-allowed;
+  transform: none;
+  box-shadow: none;
+}
+
+.ft-btn--ghost {
+  color: var(--ft-ink);
+  background: transparent;
+  border-color: var(--ft-line-strong);
+}
+.ft-btn--ghost:hover {
+  color: var(--ft-ink);
+  background: var(--ft-sand-2);
+  border-color: var(--ft-line-strong);
+}
+
+.ft-input {
+  width: 100%;
+  padding: 12px 15px;
+  font-size: 14px;
+  color: var(--ft-text);
+  background: var(--ft-paper);
+  border: 1px solid var(--ft-line-strong);
+  border-radius: var(--ft-radius-sm);
+  outline: none;
+  transition: border-color 0.15s ease, box-shadow 0.15s ease;
+}
+.ft-input:focus {
+  border-color: var(--ft-ink);
+  box-shadow: 0 0 0 3px var(--ft-accent-soft);
+}
+.ft-input::placeholder {
+  color: var(--ft-text-3);
+}
+
+.ft-tag {
+  display: inline-block;
+  padding: 3px 10px;
+  font-size: 11px;
+  font-weight: 500;
+  color: var(--ft-accent);
+  background: var(--ft-accent-soft);
+  border-radius: var(--ft-radius-pill);
+}
+
+/* 品牌标识 */
+.ft-brand {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+.ft-brand-mark {
+  display: grid;
+  place-items: center;
+  width: 36px;
+  height: 36px;
+  color: #fff;
+  background: var(--ft-ink);
+  border-radius: var(--ft-radius-sm);
+  flex-shrink: 0;
+}
+.ft-brand-name {
+  font-family: var(--font-display);
+  font-size: 20px;
+  font-weight: 500;
+  letter-spacing: 3px;
+  color: var(--ft-text);
+}
+.ft-brand-en {
+  display: block;
+  margin-top: 1px;
+  font-size: 10px;
+  font-weight: 500;
+  letter-spacing: 2.4px;
+  text-transform: uppercase;
+  color: var(--ft-text-3);
+}
+.ft-eyebrow {
+  font-size: 11px;
+  font-weight: 500;
+  letter-spacing: 2px;
+  text-transform: uppercase;
+  color: var(--ft-accent);
+}
+
+.ft-scroll::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+.ft-scroll::-webkit-scrollbar-thumb {
+  background: rgba(20, 60, 52, 0.28);
+  border-radius: var(--ft-radius-pill);
+}
+.ft-scroll::-webkit-scrollbar-thumb:hover {
+  background: rgba(20, 60, 52, 0.45);
+}
+.ft-scroll::-webkit-scrollbar-track {
+  background: transparent;
+}

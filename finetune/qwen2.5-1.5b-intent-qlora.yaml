@@ -1,0 +1,61 @@
+# ============================================================
+# 足迹 Footprint —— 意图分类 QLoRA 微调配置
+#
+# 跟 qwen2.5-1.5b-qlora.yaml（旧的 tool calling 版）的区别：
+#   这条路线教的是**现在真正会走模型的那一件事** —— 给一句话输出 travel/operation/chat。
+#   tool call 那条路已经被 classify_intent 纯文本三分类 + 直达通道绕开了，不用再训。
+#
+# 环境：WSL2 Ubuntu + LLaMA-Factory，RTX 3060 6GB
+# 运行：llamafactory-cli train qwen2.5-1.5b-intent-qlora.yaml
+# ============================================================
+
+### model
+# 训练必须用 HuggingFace 原始权重(bf16), 不能用 models/ 里那个 GGUF(推理格式, 无法反传)。
+# 本机已下载到(Windows 路径):
+#   footprint\models\Qwen2.5-1.5B-Instruct\   (3.10 GB, 7 个文件齐全)
+# WSL 里对应的绝对路径:
+#   /mnt/c/Users/Administrator/Documents/Qoder/2026-09-11/75a45244/footprint/models/Qwen2.5-1.5B-Instruct
+# 也可以留 HF 仓库名让它自己下载/读缓存 —— 两者等价, 指本地目录可省一次 3GB 下载。
+model_name_or_path: Qwen/Qwen2.5-1.5B-Instruct
+trust_remote_code: true
+
+### method
+stage: sft
+do_train: true
+finetuning_type: lora
+lora_target: all
+lora_rank: 8
+lora_alpha: 16
+lora_dropout: 0.05
+# 4bit QLoRA：6GB 显存的关键
+quantization_bit: 4
+quantization_method: bitsandbytes
+
+### dataset
+# 370 条，三类均衡（travel 118 / operation 137 / chat 115），见 scripts/gen_intent_data.py
+dataset: footprint_intent_classify
+dataset_dir: finetune/data
+template: qwen
+# 分类任务的输入 = 分类提示词(210字) + 用户一句话，640 足够；比 tool calling 那版小得多
+cutoff_len: 640
+max_samples: 100000
+overwrite_cache: true
+preprocessing_num_workers: 4
+
+### output
+output_dir: finetune/output/qwen2.5-1.5b-footprint-intent
+logging_steps: 5
+save_steps: 50
+plot_loss: true
+overwrite_output_dir: true
+
+### train
+# 总样本 370：batch 2 × grad_accum 8 = 有效 16 → 约 23 步/epoch，3 epoch ≈ 70 步
+per_device_train_batch_size: 2
+gradient_accumulation_steps: 8
+learning_rate: 1.0e-4
+num_train_epochs: 3.0
+lr_scheduler_type: cosine
+warmup_ratio: 0.1
+bf16: true
+gradient_checkpointing: true

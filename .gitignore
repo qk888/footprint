@@ -1,0 +1,39 @@
+# Python
+__pycache__/
+*.pyc
+.venv/
+
+# 环境变量与密钥(绝不提交)
+.env
+
+# 日志与本地数据库(运行时API拉取的缓存数据, 不公开)
+backend/app/data/
+backend/docs/
+backend/.vscode
+*.log
+chroma_db/
+
+# 前端
+node_modules/
+web/dist/
+web/node_modules/
+
+# 系统文件
+.DS_Store
+
+# ── 模型权重：7.1GB，绝不入库（GitHub 单文件上限 100MB / LFS 免费额度仅 1GB）──
+models/
+
+# ── 知识库原文：15MB 的 Wikivoyage 产物，可由脚本重新生成 ──
+backend/app/agent/data/*.txt
+
+# ── 本地实例配置（含真实 secret_key）──
+searxng/settings.yml
+
+# ── 所有环境变量文件（.env 已在上方忽略，这里覆盖 .env.prod 等变体）──
+.env.*
+!.env.example
+
+# ── 训练产物与临时文件 ──
+*.gguf
+finetune/output/

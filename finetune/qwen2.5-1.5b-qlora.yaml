@@ -1,0 +1,53 @@
+# ============================================================
+# 足迹 Footprint —— Qwen2.5-1.5B-Instruct QLoRA 微调配置
+# 环境：WSL2 Ubuntu + LLaMA-Factory，RTX 3060 6GB
+# 运行：llamafactory-cli train finetune/qwen2.5-1.5b-qlora.yaml
+# ============================================================
+
+### model
+model_name_or_path: Qwen/Qwen2.5-1.5B-Instruct
+trust_remote_code: true
+
+### method
+stage: sft
+do_train: true
+finetuning_type: lora
+lora_target: all
+lora_rank: 8
+lora_alpha: 16
+lora_dropout: 0.05
+# 4bit QLoRA：6GB 显存的关键
+quantization_bit: 4
+quantization_method: bitsandbytes
+
+### dataset
+dataset: footprint_tool_calling
+dataset_dir: finetune/data
+template: qwen
+cutoff_len: 2048
+max_samples: 100000
+overwrite_cache: true
+preprocessing_num_workers: 4
+
+### output
+output_dir: finetune/output/qwen2.5-1.5b-footprint
+logging_steps: 10
+save_steps: 100
+plot_loss: true
+overwrite_output_dir: true
+
+### train
+per_device_train_batch_size: 1
+gradient_accumulation_steps: 8
+learning_rate: 1.0e-4
+num_train_epochs: 3.0
+lr_scheduler_type: cosine
+warmup_ratio: 0.1
+bf16: true
+gradient_checkpointing: true
+
+### eval（如需验证集，取消注释并准备 val 文件）
+# val_size: 0.02
+# per_device_eval_batch_size: 1
+# eval_strategy: steps
+# eval_steps: 100

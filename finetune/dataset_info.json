@@ -1,0 +1,35 @@
+{
+  "footprint_tool_calling": {
+    "file_name": "tool_calling_train.jsonl",
+    "formatting": "sharegpt",
+    "columns": {
+      "messages": "messages",
+      "system": "system",
+      "tools": "tools"
+    },
+    "tags": {
+      "role_tag": "from",
+      "content_tag": "value",
+      "user_tag": "human",
+      "assistant_tag": "gpt",
+      "observation_tag": "observation",
+      "function_tag": "function_call",
+      "system_tag": "system"
+    }
+  },
+  "footprint_intent_classify": {
+    "file_name": "intent_classify_train.jsonl",
+    "formatting": "sharegpt",
+    "columns": {
+      "messages": "messages",
+      "system": "system"
+    },
+    "tags": {
+      "role_tag": "from",
+      "content_tag": "value",
+      "user_tag": "human",
+      "assistant_tag": "gpt",
+      "system_tag": "system"
+    }
+  }
+}

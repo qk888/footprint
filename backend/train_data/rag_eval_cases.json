@@ -1,0 +1,61 @@
+{
+  "_note": "RAG 回归评估集。改写检索/提示词/护栏后跑 scripts/eval_rag.py 对比。分五组：检索层、数字校验、中文检查、城市匹配、端到端。e2e 组要起模型（每条 3~13 秒），其余三组离线毫秒级。",
+  "retrieval": [
+    {"id": "重庆三日游攻略", "query": "重庆三日游攻略", "cities": ["重庆"], "relevant": true},
+    {"id": "成都必吃的美食", "query": "成都必吃的美食", "cities": ["成都"], "relevant": true},
+    {"id": "厦门鼓浪屿怎么去", "query": "厦门鼓浪屿怎么去", "cities": ["厦门", "鼓浪屿"], "relevant": true},
+    {"id": "从北京到杭州三日游", "query": "从北京到杭州三日游", "cities": ["北京", "杭州"], "relevant": true},
+    {"id": "洪崖洞怎么去", "query": "洪崖洞怎么去", "cities": [], "relevant": true},
+    {"id": "适合春天去的城市", "query": "适合春天去的城市有哪些", "cities": [], "relevant": true},
+    {"id": "拉萨注意事项", "query": "拉萨有什么要注意的", "cities": ["拉萨"], "relevant": true},
+    {"id": "长白山的雪景(不该认成白山)", "query": "长白山的雪景一定很美", "cities": [], "relevant": true},
+    {"id": "去日照玩两天(同形词带锚点)", "query": "去日照玩两天", "cities": ["日照"], "relevant": true},
+    {"id": "货币贬值(章节名不该当地名)", "query": "货币贬值对经济的影响", "cities": [], "relevant": false},
+    {"id": "怎么在网上购物(章节名)", "query": "怎么在网上购物", "cities": [], "relevant": false},
+    {"id": "宿舍住宿条件(章节名)", "query": "宿舍住宿条件怎么样", "cities": [], "relevant": false},
+    {"id": "怎么修电脑", "query": "怎么修电脑", "cities": [], "relevant": false},
+    {"id": "介绍一下量子力学", "query": "介绍一下量子力学", "cities": [], "relevant": false},
+    {"id": "今天股市怎么样", "query": "今天股市怎么样", "cities": [], "relevant": false},
+    {"id": "帮我写一段python代码", "query": "帮我写一段python代码", "cities": [], "relevant": false},
+    {"id": "推荐几部科幻电影", "query": "推荐几部科幻电影", "cities": [], "relevant": false},
+    {"id": "我昨晚梦到了恐龙", "query": "我昨晚梦到了恐龙", "cities": [], "relevant": false}
+  ],
+  "numbers": [
+    {"id": "用户自报预算不算编造", "answer": "重庆三日游预算3000元，洪崖洞晚上八点开灯", "context": "[参考资料1]: 重庆 · 景点：洪崖洞晚上八点开灯，门票免费。", "query": "重庆三日游预算3000元", "expect": []},
+    {"id": "复述用户预算不算编造", "answer": "按你3000元的预算来安排", "context": "[参考资料1]: 重庆 · 交通：轻轨2号线可达。", "query": "预算3000元", "expect": []},
+    {"id": "编造价格要检出", "answer": "门票是10元", "context": "[参考资料1]: 重庆 · 景点：洪崖洞门票免费。", "query": "洪崖洞门票多少", "expect": ["10元"]},
+    {"id": "资料内数字不算编造", "answer": "洪崖洞是4A景区，门票免费", "context": "[参考资料1]: 重庆 · 景点：洪崖洞是4A景区，门票免费。", "query": "洪崖洞", "expect": []},
+    {"id": "裸计数不校验", "answer": "有3个景点值得去", "context": "[参考资料1]: 重庆 · 景点：洪崖洞。", "query": "重庆景点", "expect": []},
+    {"id": "编造天数要检出", "answer": "建议玩5天左右", "context": "[参考资料1]: 重庆 · 了解：适合玩三天。", "query": "重庆玩几天", "expect": ["5天"]},
+    {"id": "列表编号不校验", "answer": "1. 洪崖洞\n2. 解放碑", "context": "[参考资料1]: 重庆 · 景点：洪崖洞、解放碑。", "query": "重庆景点", "expect": []}
+  ],
+  "chinese": [
+    {"id": "短中文放行", "text": "洪崖洞免费。", "expect": true},
+    {"id": "短中文放行2", "text": "是的，门票免费。", "expect": true},
+    {"id": "正常中文放行", "text": "洪崖洞的门票是免费的，晚上八点开灯，建议傍晚去。", "expect": true},
+    {"id": "太短不认", "text": "免费", "expect": false},
+    {"id": "英文漂移拦截", "text": "Hey there! So, you're thinking about visiting Chongqing. The entrance is free and you can enjoy the night view there.", "expect": false},
+    {"id": "空串不认", "text": "", "expect": false}
+  ],
+  "city_mention": [
+    {"id": "三明治不该抽三明", "text": "早上吃个三明治就行", "cities": []},
+    {"id": "开封一下不该抽开封", "text": "帮我开封一下这个文件", "cities": []},
+    {"id": "日照金山不该抽日照", "text": "日出日照金山，真是美景", "cities": []},
+    {"id": "中山路不该抽中山", "text": "我晚上在中山路吃饭", "cities": []},
+    {"id": "长白山是延边的目的地(绝不能认成白山市)", "text": "长白山的雪景一定很美", "cities": ["延边"]},
+    {"id": "大同小异不该抽大同", "text": "大同小异，没什么区别", "cities": []},
+    {"id": "白银价格不该抽白银", "text": "白银价格最近涨了", "cities": []},
+    {"id": "来宾不该被抽", "text": "欢迎各位来宾参观我们的展台", "cities": []},
+    {"id": "去想重庆要抽到", "text": "我想去重庆玩三天", "cities": ["重庆"]},
+    {"id": "推荐日照(句尾)要抽到", "text": "推荐日照", "cities": ["日照"]},
+    {"id": "三明三日游(天数)要抽到", "text": "三明三日游", "cities": ["三明"]},
+    {"id": "白山市(后缀)要抽到", "text": "白山市有什么好玩的", "cities": ["白山"]}
+  ],
+  "e2e": [
+    {"id": "本地命中不能回兜底话术", "query": "重庆三日游攻略", "forbid": ["抱歉，暂时没找到相关资料"], "require_any": []},
+    {"id": "本地命中(厦门)", "query": "厦门鼓浪屿怎么去", "forbid": ["抱歉，暂时没找到相关资料"], "require_any": []},
+    {"id": "本地命中(成都)", "query": "成都必吃的美食", "forbid": ["抱歉，暂时没找到相关资料"], "require_any": []},
+    {"id": "门票问句要有数字或明说没有", "query": "洪崖洞门票多少", "forbid": [], "require_any": ["免费", "门票", "资料里没写"]},
+    {"id": "本地命中(拉萨)", "query": "拉萨有什么要注意的", "forbid": ["抱歉，暂时没找到相关资料"], "require_any": []}
+  ]
+}

@@ -1,0 +1,199 @@
+# ============================================================
+# 足迹 Footprint —— 本地全栈编排（个人学习/非商业）
+#
+# 默认只起后端栈： mysql + redis + mailpit + backend
+#   docker compose up -d --build
+#
+# 需要本地大模型时（GPU）追加 profile：
+#   docker compose --profile ai up -d --build
+# 需要 Vue 前端时追加 profile：
+#   docker compose --profile web up -d --build
+# 三者都要：
+#   docker compose --profile ai --profile web up -d --build
+# ============================================================
+
+name: footprint
+
+services:
+  # ---------- MySQL 8 ----------
+  mysql:
+    image: mysql:8.0
+    container_name: footprint-mysql
+    restart: unless-stopped
+    env_file: .env
+    environment:
+      # 与 .env 中保持一致，供 mysql 官方镜像初始化
+      MYSQL_ROOT_PASSWORD: ${DB_PASSWORD}
+      MYSQL_DATABASE: ${DB_NAME}
+    command:
+      - --character-set-server=utf8mb4
+      - --collation-server=utf8mb4_unicode_ci
+    volumes:
+      - mysql_data:/var/lib/mysql
+    ports:
+      - "13306:3306"   # 宿主机 13306 → 容器 3306，避免与本机已装的 MySQL 冲突
+    healthcheck:
+      test: ["CMD", "mysqladmin", "ping", "-h", "127.0.0.1", "-uroot", "-p${DB_PASSWORD}"]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+      start_period: 30s
+    networks: [footprint-net]
+
+  # ---------- Redis 7 ----------
+  redis:
+    image: redis:7-alpine
+    container_name: footprint-redis
+    restart: unless-stopped
+    command: ["redis-server", "--appendonly", "yes"]
+    volumes:
+      - redis_data:/data
+    ports:
+      - "16379:6379"
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    networks: [footprint-net]
+
+  # ---------- Mailpit：本地 SMTP 收件 + Web 查看验证码 ----------
+  mailpit:
+    image: axllent/mailpit:latest
+    container_name: footprint-mailpit
+    restart: unless-stopped
+    ports:
+      - "8025:8025"     # Web UI: http://localhost:8025
+    networks: [footprint-net]
+
+  # ---------- 后端 FastAPI ----------
+  backend:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    container_name: footprint-backend
+    restart: unless-stopped
+    env_file: .env
+    depends_on:
+      mysql:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+      mailpit:
+        condition: service_started
+    volumes:
+      # RAG 向量库（chroma.yml: persist_directory=chroma_db → app/agent/chroma_db）
+      - chroma_db:/app/app/agent/chroma_db
+      # 运行时 API 缓存（data_sources.py: DATA_DIR=app/data）
+      - api_cache:/app/app/data
+      # 可选：开发时热改源码，取消注释（venv 在 /opt/venv，不会被遮蔽）
+      # - ./backend/app:/app/app
+    ports:
+      - "8000:8000"     # API: http://localhost:8000  文档: /docs
+    networks: [footprint-net]
+
+  # ---------- 对话模型 llama.cpp（profile: ai, 需要 GPU）----------
+  chat-model:
+    image: ghcr.io/ggml-org/llama.cpp:server-cuda
+    container_name: footprint-chat-model
+    restart: unless-stopped
+    profiles: ["ai"]
+    volumes:
+      - ./models:/models:ro
+    command: >
+      --model /models/qwen2.5-1.5b-instruct.gguf
+      --host 0.0.0.0 --port 8080
+      --n-gpu-layers 99 --ctx-size 4096
+      --alias qwen
+      --temp 0.7 --repeat-penalty 1.15 --presence-penalty 0.4 --frequency-penalty 0.4
+      --n-predict 1024
+    ports:
+      - "18080:8080"    # 宿主机调试口
+    deploy:
+      resources:
+        reservations:
+          devices:
+            - driver: nvidia
+              count: all
+              capabilities: [gpu]
+    networks: [footprint-net]
+
+  # ---------- 向量模型 llama.cpp（profile: ai, 需要 GPU）----------
+  embed-model:
+    image: ghcr.io/ggml-org/llama.cpp:server-cuda
+    container_name: footprint-embed-model
+    restart: unless-stopped
+    profiles: ["ai"]
+    volumes:
+      - ./models:/models:ro
+    command: >
+      --model /models/m3e.gguf
+      --host 0.0.0.0 --port 8081
+      --n-gpu-layers 99 --ctx-size 512
+      --embedding --alias m3e
+    ports:
+      - "18081:8081"
+    healthcheck:
+      # 镜像自带 HEALTHCHECK 写死探 8080, 本服务听 8081, 覆盖掉否则永远 unhealthy
+      test: ["CMD-SHELL", "curl -f http://localhost:8081/health || exit 1"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 30s
+    deploy:
+      resources:
+        reservations:
+          devices:
+            - driver: nvidia
+              count: all
+              capabilities: [gpu]
+    networks: [footprint-net]
+
+  # ---------- 联网搜索 SearXNG（profile: ai）----------
+  # 放 ai profile 的理由: 只有走 RAG 攻略问答才用它, 而那条路依赖 chat-model/embed-model,
+  # 跟 ai 一起起最省心; 不带 profile 的纯后端栈不会多拉这个容器。
+  #
+  # 配置见 ./searxng/settings.yml（禁外网引擎 + 压超时 + 关 limiter，都是实测出来的优化）
+  # 后端按服务名访问：http://searxng:8080/search（不是宿主机的 18888）
+  searxng:
+    image: searxng/searxng:latest
+    container_name: footprint-searxng
+    restart: unless-stopped
+    profiles: ["ai"]
+    volumes:
+      - ./searxng:/etc/searxng
+    environment:
+      - SEARXNG_BASE_URL=http://localhost:8080/
+    ports:
+      - "18888:8080"    # 宿主机调试口 http://localhost:18888
+    healthcheck:
+      test: ["CMD-SHELL", "wget -q -O /dev/null http://localhost:8080/ || exit 1"]
+      interval: 15s
+      timeout: 5s
+      retries: 5
+      start_period: 20s
+    networks: [footprint-net]
+
+  # ---------- 前端 Vue + nginx（profile: web）----------
+  frontend:
+    build:
+      context: ./web
+      dockerfile: Dockerfile
+    container_name: footprint-frontend
+    restart: unless-stopped
+    profiles: ["web"]
+    depends_on:
+      - backend
+    ports:
+      - "8080:80"       # Web: http://localhost:8080
+    networks: [footprint-net]
+
+volumes:
+  mysql_data:
+  redis_data:
+  chroma_db:
+  api_cache:
+
+networks:
+  footprint-net:
+    driver: bridge
